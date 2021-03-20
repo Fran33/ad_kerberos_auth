@@ -22,8 +22,7 @@ app.get('/', function (req, res) {
 
         // this code is only for Linux !
 
-        var KerberosNative = require('kerberos').Kerberos;
-        var kerberos = new KerberosNative();
+        var kerberos = require('kerberos');
         var ActiveDirectory = require('activedirectory');
         var ad = new ActiveDirectory({
             "url": "ldap://<example.com>",
@@ -34,9 +33,9 @@ app.get('/', function (req, res) {
         var ticket = req.headers.authorization.substring(10);
 
         //init context
-        kerberos.authGSSServerInit("HTTP", function(err, context) {
+        kerberos.initializeServer("HTTP", function(err, context) {
             //check ticket
-            kerberos.authGSSServerStep(context, ticket, function(err) {
+            context.step(ticket, function(err) {
                 //in success context contains username
                 ad.findUser(context.username, function(err, user) {
                     //get user groups
@@ -53,10 +52,10 @@ app.get('/', function (req, res) {
                         var response = '<p>Имя пользователя: '+ user.cn + '</p><p>Состоит в группах:</p><ul>';
                         for (var i in result.groups) {response += '<li>' + result.groups[i].cn + '</li>';}
                         res.send(response);
-                    })
-                });
-            });
-        });
+                    }) // end ad.find
+                }); // end ad findUser
+            }); // end step
+        }); // end initializeServer
 
         // this code is for Windows - yet not working
 
